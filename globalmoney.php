@@ -52,11 +52,13 @@ function globalmoney_change_shop()
 		$globalmoney_secret_key = $_POST['globalmoney_secret_key'];
 		$globalmoney_status_url = $_POST['globalmoney_status_url'];
 		$globalmoney_destination_wallet = $_POST['globalmoney_destination_wallet'];
+		$globalmoney_page_after_paid = $_POST['globalmoney_page_after_paid'];
 
 		update_option('globalmoney_shop_id', $globalmoney_shop_id);
 		update_option('globalmoney_secret_key', $globalmoney_secret_key);
 		update_option('globalmoney_status_url', $globalmoney_status_url);
 		update_option('globalmoney_destination_wallet', $globalmoney_destination_wallet);
+		update_option('globalmoney_page_after_paid', $globalmoney_page_after_paid);
 	}
 
 	//Форма информации о магазине
@@ -80,7 +82,7 @@ function globalmoney_change_shop()
 			<tr>
 				<td style='text-align:right;'>Идентификатор приложения:</td>
 				<td><input type='text' name='globalmoney_shop_id' value='".get_option('globalmoney_shop_id')."'/></td>
-				<td style='color:#666666;'><i>Идентификатор приложения.</i></td>
+				<td style='color:#666666;'><i>Идентификатор приложения. Для <a href='https://globalmoney.ua/business/possibilities/walletpayments/#support'>создания приложеня перейдите по ссылке</a></i></td>
 			</tr>
 			<tr>
 				<td style='text-align:right;'>Секретный ключ:</td>
@@ -97,6 +99,16 @@ function globalmoney_change_shop()
 				<td style='font-size:10px; color:#666666'>http://www.moyblog.ru/payment</td>
 				<td>&nbsp;</td>
 			</tr>
+			<tr>
+                <td style='text-align:right;'>Стратица после оплаты:</td>
+                <td><input type='text' name='globalmoney_page_after_paid' value='".get_option('globalmoney_page_after_paid')."'/></td>
+                <td style='color:#666666;'><i>Ссылка на страницу куда будут переданные данные после выполнения оплаты через GET в формате ?status=0&amount=1&transactionId=5124479858&source=38697368261130&destination=53501478816185&comment=tovar&timestamp=2015-04-08 13:13:26&balance=93</i></td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td style='font-size:10px; color:#666666'>http://www.moyblog.ru/after_paid</td>
+                <td>&nbsp;</td>
+            </tr>
 
 			<tr>
 				<td>&nbsp;</td>
@@ -107,9 +119,13 @@ function globalmoney_change_shop()
 			</tr>
 		</table>
 	</form>
+
+	<h2>Использование плагина</h2>
+	<p>Поместите код [globalmoney title='tovar' price='1.10'] , где</p>
+	<p>title - комментария для платежа;</p>
+	<p>price - цена в гривнах</p>
 	";
 }
-
 
 function confirm_payment(){
     $code = $_GET['code'];
@@ -127,9 +143,6 @@ function confirm_payment(){
 
 		$result = curl_exec($curl);
 		curl_close($curl);
-
-//    print_r($result);
-//    echo $_SESSION['price'];
 
     $answer = json_decode($result, true);
     if (isset($answer['error']))
@@ -156,13 +169,25 @@ function confirm_payment(){
 		);
         curl_setopt($curl, CURLOPT_POST, true);
         $json_post = '{"destination" : "'.$destination.'","amount" : '.$amount.',"comment" : "'.$comment.'"}';
-        //echo $json_post;
+
         curl_setopt($curl, CURLOPT_POSTFIELDS, $json_post);
 
         $result = curl_exec($curl);
         curl_close($curl);
 
-        print_r($result);
+        if(isset($_SESSION['price']))
+            unset($_SESSION['price']);
+        if(isset($_SESSION['comment']))
+            unset($_SESSION['comment']);
+
+        $to_redirect = json_decode($result, true);
+        $str = '?';
+        foreach($to_redirect as $key=>$value)
+            $str .= $key.'='.$value.'&';
+
+        header("Location: ".get_option('globalmoney_page_after_paid').$str);
+        die();
+
     }
 
     if(isset($_SESSION['price']))
@@ -209,6 +234,7 @@ function globalmoney_install()
 	add_option('globalmoney_secret_key', 'Не задано');
 	add_option('globalmoney_status_url', 'http://myblog.loc/status');
 	add_option('globalmoney_destination_wallet', 'Не задано');
+	add_option('globalmoney_page_after_paid', 'http://myblog.loc/after_paid');
 }
 
 function globalmoney_uninstall()
@@ -217,6 +243,7 @@ function globalmoney_uninstall()
 	delete_option('globalmoney_secret_key');
 	delete_option('globalmoney_status_url');
 	delete_option('globalmoney_destination_wallet');
+	delete_option('globalmoney_page_after_paid');
 }
 
 register_activation_hook( __FILE__, 'globalmoney_install');
