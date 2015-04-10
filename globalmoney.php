@@ -49,10 +49,29 @@ function globalmoney_change_shop()
 		}
 
 		$globalmoney_shop_id = $_POST['globalmoney_shop_id'];
+		if ( ! $globalmoney_shop_id )
+          $globalmoney_shop_id = 'Не задано';
+        $globalmoney_shop_id = sanitize_text_field($globalmoney_shop_id);
+
 		$globalmoney_secret_key = $_POST['globalmoney_secret_key'];
+		if ( ! $globalmoney_secret_key )
+          $globalmoney_secret_key = 'Не задано';
+        $globalmoney_secret_key = sanitize_text_field($globalmoney_secret_key);
+
 		$globalmoney_status_url = $_POST['globalmoney_status_url'];
+		if ( ! $globalmoney_status_url )
+          $globalmoney_status_url = 'Не задано';
+        $globalmoney_status_url = sanitize_text_field($globalmoney_status_url);
+
 		$globalmoney_destination_wallet = $_POST['globalmoney_destination_wallet'];
+		if ( ! $globalmoney_destination_wallet )
+          $globalmoney_destination_wallet = 'Не задано';
+        $globalmoney_destination_wallet = sanitize_text_field($globalmoney_destination_wallet);
+
 		$globalmoney_page_after_paid = $_POST['globalmoney_page_after_paid'];
+		if ( ! $globalmoney_page_after_paid )
+          $globalmoney_page_after_paid = 'Не задано';
+        $globalmoney_page_after_paid = sanitize_text_field($globalmoney_page_after_paid);
 
 		update_option('globalmoney_shop_id', $globalmoney_shop_id);
 		update_option('globalmoney_secret_key', $globalmoney_secret_key);
@@ -261,7 +280,7 @@ function shortcode_func( $atts ) {
 
 	$price = (int)((float) $a['price'] * 100);
     $_SESSION['price'] = $price;
-    $_SESSION['comment'] = $a['title'];
+    $_SESSION['comment'] = sanitize_text_field($a['title']);
 
     return "<a href='https://globalmoney.ua/my/permissions/?response_type=code&client_id=".get_option('globalmoney_shop_id')."&redirect_uri=".get_option('globalmoney_status_url')."&scope=charge(".$price.")' target='_blank'>GlobalMoney</a>";
 }
